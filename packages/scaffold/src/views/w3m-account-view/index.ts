@@ -2,6 +2,7 @@ import {
   AccountController,
   AssetController,
   ConnectionController,
+  ConstantsUtil,
   CoreHelperUtil,
   EventsController,
   ModalController,
@@ -9,6 +10,7 @@ import {
   RouterController,
   SnackController
 } from '@web3modal/core'
+import type { CaipNetworkCoinbaseNetwork } from '@web3modal/core'
 import { UiHelperUtil, customElement } from '@web3modal/ui'
 import { LitElement, html } from 'lit'
 import { state } from 'lit/decorators.js'
@@ -18,11 +20,7 @@ import styles from './styles.js'
 import { initOnRamp } from '@coinbase/cbpay-js'
 import type { CBPayInstanceType } from '@coinbase/cbpay-js'
 
-const coinbaseAppID = process.env['NEXT_PUBLIC_COINBASE_APP_ID']!
-console.log({ coinbaseAppID })
-if (!coinbaseAppID) {
-  throw new Error('NEXT_PUBLIC_COINBASE_APP_ID is not set')
-}
+const coinbaseAppID = process.env['NEXT_PUBLIC_COINBASE_APP_ID']
 
 @customElement('w3m-account-view')
 export class W3mAccountView extends LitElement {
@@ -76,33 +74,15 @@ export class W3mAccountView extends LitElement {
 
   public override disconnectedCallback() {
     this.usubscribe.forEach(unsubscribe => unsubscribe())
+    this.onrampInstance?.destroy()
   }
 
   public override firstUpdated() {
-    initOnRamp(
-      {
-        appId: coinbaseAppID,
-        widgetParameters: {
-          destinationWallets: [
-            {
-              address: '0xf3ea39310011333095CFCcCc7c4Ad74034CABA63',
-              blockchains: ['ethereum']
-            }
-          ]
-        },
-        experienceLoggedIn: 'popup',
-        experienceLoggedOut: 'popup',
-        closeOnExit: true,
-        closeOnSuccess: true
-      },
-      (_, instance) => {
-        this.onrampInstance = instance
-      }
-    )
+    this.initializeOnRamp()
+  }
 
-    return () => {
-      this.onrampInstance?.destroy()
-    }
+  public override updated() {
+    this.initializeOnRamp()
   }
 
   // -- Render -------------------------------------------- //
@@ -116,7 +96,7 @@ export class W3mAccountView extends LitElement {
     return html`
       <wui-flex
         flexDirection="column"
-        .padding=${['0', 's', 'm', 's'] as const}
+        .padding=${['0', 'xl', 'm', 'xl'] as const}
         alignItems="center"
         gap="l"
       >
@@ -153,13 +133,12 @@ export class W3mAccountView extends LitElement {
             <wui-text variant="paragraph-500" color="fg-200">
               ${CoreHelperUtil.formatBalance(this.balance, this.balanceSymbol)}
             </wui-text>
-
             ${this.explorerBtnTemplate()}
           </wui-flex>
         </wui-flex>
       </wui-flex>
 
-      <wui-flex flexDirection="column" gap="xs" .padding=${['0', 's', 's', 's'] as const}>
+      <wui-flex flexDirection="column" gap="xs" .padding=${['0', 'xl', 'xl', 'xl'] as const}>
         <wui-list-item
           .variant=${networkImage ? 'image' : 'icon'}
           iconVariant="overlay"
@@ -207,6 +186,44 @@ export class W3mAccountView extends LitElement {
   // -- Private ------------------------------------------- //
   private handleClickPay() {
     this.onrampInstance?.open()
+  }
+
+  private initializeOnRamp() {
+    const networkName = this.network?.name
+    const address = this.address
+
+    if (!coinbaseAppID) {
+      throw new Error('NEXT_PUBLIC_COINBASE_APP_ID is not set')
+    }
+
+    if (!networkName || !address) {
+      return
+    }
+
+    const coinbaseChainName =
+      ConstantsUtil.WC_COINBASE_PAY_SDK_CHAIN_NAME_MAP?.[networkName as CaipNetworkCoinbaseNetwork]
+
+    initOnRamp(
+      {
+        appId: coinbaseAppID,
+        widgetParameters: {
+          destinationWallets: [
+            {
+              address,
+              blockchains: [coinbaseChainName],
+              assets: ['USDC']
+            }
+          ]
+        },
+        experienceLoggedIn: 'popup',
+        experienceLoggedOut: 'popup',
+        closeOnExit: true,
+        closeOnSuccess: true
+      },
+      (_, instance) => {
+        this.onrampInstance = instance
+      }
+    )
   }
 
   private explorerBtnTemplate() {
