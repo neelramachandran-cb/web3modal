@@ -232,7 +232,7 @@ export class W3mAccountView extends LitElement {
               assets: ['USDC']
             }
           ],
-          partnerUserId: ''
+          partnerUserId: address
         },
         experienceLoggedIn: 'popup',
         experienceLoggedOut: 'popup',
