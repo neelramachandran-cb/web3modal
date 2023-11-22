@@ -1,7 +1,8 @@
 import {
   AccountController,
-  AssetController,
+  ConnectorController,
   ConnectionController,
+  AssetController,
   ConstantsUtil,
   CoreHelperUtil,
   EventsController,
@@ -48,6 +49,10 @@ export class W3mAccountView extends LitElement {
 
   @state() private disconecting = false
 
+  @state() private connectors = ConnectorController.state.connectors
+
+  @state() private connectorId = ConnectionController.state.connectorId
+
   public constructor() {
     super()
     this.usubscribe.push(
@@ -62,6 +67,12 @@ export class W3mAccountView extends LitElement {
           } else {
             ModalController.close()
           }
+        }),
+        ConnectorController.subscribeKey('connectors', connectors => {
+          this.connectors = connectors
+        }),
+        ConnectionController.subscribeKey('connectorId', connectorId => {
+          this.connectorId = connectorId
         })
       ],
       NetworkController.subscribeKey('caipNetwork', val => {
@@ -150,13 +161,13 @@ export class W3mAccountView extends LitElement {
         </wui-list-item>
         <wui-list-item
           iconVariant="blue"
-          icon="swapHorizontalBold"
-          iconSize="sm"
+          icon="add"
+          iconSize="lg"
           .loading=${!this.onrampInstance}
           ?chevron=${true}
           @click=${this.handleClickPay.bind(this)}
         >
-          <wui-text variant="paragraph-500" color="fg-100">Pay with Coinbase</wui-text>
+          <wui-text variant="paragraph-500" color="fg-100">Buy crypto</wui-text>
         </wui-list-item>
         <wui-list-item
           iconVariant="blue"
@@ -206,6 +217,10 @@ export class W3mAccountView extends LitElement {
       this.onrampInstance.destroy()
     }
 
+    console.log('this.connectorID', this.connectorId)
+    console.log('this.connectors', this.connectors)
+    console.log(AccountController.state)
+
     initOnRamp(
       {
         appId: coinbaseAppID,
@@ -216,7 +231,8 @@ export class W3mAccountView extends LitElement {
               blockchains: [coinbaseChainName],
               assets: ['USDC']
             }
-          ]
+          ],
+          partnerUserId: ''
         },
         experienceLoggedIn: 'popup',
         experienceLoggedOut: 'popup',
