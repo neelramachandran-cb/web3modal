@@ -5,6 +5,7 @@ import type { WcWallet } from './TypeUtil.js'
 const WC_DEEPLINK = 'WALLETCONNECT_DEEPLINK_CHOICE'
 const W3M_RECENT = '@w3m/recent'
 const W3M_CONNECTED_WALLET_IMAGE_URL = '@w3m/connected_wallet_image_url'
+const W3M_CONNECTED_WALLET_NAME = '@w3m/connected_wallet_name'
 
 // -- Utility -----------------------------------------------------------------
 export const StorageUtil = {
@@ -78,6 +79,24 @@ export const StorageUtil = {
       return localStorage.getItem(W3M_CONNECTED_WALLET_IMAGE_URL)
     } catch {
       console.info('Unable to set Connected Wallet Image Url')
+    }
+
+    return undefined
+  },
+
+  setConnectedWalletName(walletName: string) {
+    try {
+      localStorage.setItem(W3M_CONNECTED_WALLET_NAME, walletName)
+    } catch {
+      console.info('Unable to set Connected Wallet name')
+    }
+  },
+
+  getConnectedWalletName() {
+    try {
+      return localStorage.getItem(W3M_CONNECTED_WALLET_NAME)
+    } catch {
+      console.info('Unable to set Connected Wallet name')
     }
 
     return undefined

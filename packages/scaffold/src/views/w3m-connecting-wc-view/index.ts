@@ -60,6 +60,7 @@ export class W3mConnectingWcView extends LitElement {
       if (retry || CoreHelperUtil.isPairingExpired(wcPairingExpiry)) {
         ConnectionController.connectWalletConnect()
         if (this.wallet) {
+          StorageUtil.setConnectedWalletName(this.wallet.name)
           const url = AssetUtil.getWalletImage(this.wallet)
           if (url) {
             StorageUtil.setConnectedWalletImageUrl(url)
@@ -67,6 +68,7 @@ export class W3mConnectingWcView extends LitElement {
         } else {
           const connectors = ConnectorController.state.connectors
           const connector = connectors.find(c => c.type === 'WALLET_CONNECT')
+          StorageUtil.setConnectedWalletName(connector?.name ?? 'Wallet Connect')
           const url = AssetUtil.getConnectorImage(connector)
           if (url) {
             StorageUtil.setConnectedWalletImageUrl(url)

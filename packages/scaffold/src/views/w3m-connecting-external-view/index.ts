@@ -39,6 +39,7 @@ export class W3mConnectingExternalView extends W3mConnectingWidget {
       this.error = false
       if (this.connector) {
         if (this.connector.imageUrl) {
+          StorageUtil.setConnectedWalletName(this.connector.name ?? 'WalletConnect')
           StorageUtil.setConnectedWalletImageUrl(this.connector.imageUrl)
         }
         await ConnectionController.connectExternal(this.connector)

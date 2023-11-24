@@ -10,6 +10,7 @@ import {
   RouterController,
   SnackController
 } from '@web3modal/core'
+import { StorageUtil } from '@web3modal/core'
 import type { CaipNetworkCoinbaseNetwork } from '@web3modal/core'
 import { UiHelperUtil, customElement } from '@web3modal/ui'
 import { LitElement, html } from 'lit'
@@ -38,6 +39,10 @@ export class W3mAccountView extends LitElement {
   @state() private address = AccountController.state.address
 
   @state() private profileImage = AccountController.state.profileImage
+
+  @state() private walletImageUrl = StorageUtil.getConnectedWalletImageUrl()
+
+  @state() private walletName = StorageUtil.getConnectedWalletName()
 
   @state() private profileName = AccountController.state.profileName
 
@@ -203,11 +208,13 @@ export class W3mAccountView extends LitElement {
           destinationWallets: [
             {
               address,
-              blockchains: [coinbaseChainName],
+              blockchains: [coinbaseChainName, 'base'],
               assets: ['USDC']
             }
           ],
-          partnerUserId: address
+          partnerUserId: address,
+          connectedWalletImage: this.walletImageUrl ?? '',
+          connectedWalletName: this.walletName ?? ''
         },
         experienceLoggedIn: 'popup',
         experienceLoggedOut: 'popup',
