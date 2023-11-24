@@ -100,40 +100,47 @@ export class W3mAccountView extends LitElement {
         alignItems="center"
         gap="l"
       >
-        <wui-avatar
-          alt=${this.address}
-          address=${this.address}
-          imageSrc=${ifDefined(this.profileImage)}
-        ></wui-avatar>
-        <wui-flex flexDirection="column" alignItems="center">
-          <wui-flex gap="3xs" alignItems="center" justifyContent="center">
-            <wui-text variant="large-600" color="fg-100">
-              ${this.profileName
-                ? UiHelperUtil.getTruncateString({
-                    string: this.profileName,
-                    charsStart: 20,
-                    charsEnd: 0,
-                    truncate: 'end'
-                  })
-                : UiHelperUtil.getTruncateString({
-                    string: this.address,
-                    charsStart: 4,
-                    charsEnd: 6,
-                    truncate: 'middle'
-                  })}
-            </wui-text>
-            <wui-icon-link
-              size="md"
-              icon="copy"
-              iconColor="fg-200"
-              @click=${this.onCopyAddress}
-            ></wui-icon-link>
+        <wui-flex flexDirection="column" alignItems="center" gap="l">
+          <wui-flex alignItems="center" justifyContent="center">
+            <wui-flex class="account-button" alignItems="center" gap="s">
+              <wui-flex alignItems="center" justifyContent="center" gap="xs">
+                <wui-flex class="avatar-container" alignItems="center" justifyContent="center">
+                  <wui-avatar
+                    class="avatar"
+                    alt=${this.address}
+                    address=${this.address}
+                    imageSrc=${ifDefined(this.profileImage)}
+                  ></wui-avatar>
+                  <wui-avatar
+                    class="network-avatar"
+                    alt=${this.address}
+                    address=${this.address}
+                    imageSrc=${ifDefined(networkImage)}
+                  ></wui-avatar>
+                </wui-flex>
+                <wui-text variant="large-600" color="fg-100">
+                  ${this.profileName
+                    ? UiHelperUtil.getTruncateString({
+                        string: this.profileName,
+                        charsStart: 20,
+                        charsEnd: 0,
+                        truncate: 'end'
+                      })
+                    : UiHelperUtil.getTruncateString({
+                        string: this.address,
+                        charsStart: 4,
+                        charsEnd: 6,
+                        truncate: 'middle'
+                      })}
+                </wui-text>
+              </wui-flex>
+              <wui-icon color="fg-200" name="chevronBottom"></wui-icon>
+            </wui-flex>
           </wui-flex>
           <wui-flex gap="s" flexDirection="column" alignItems="center">
-            <wui-text variant="paragraph-500" color="fg-200">
+            <wui-text variant="2xl-500" color="fg-100">
               ${CoreHelperUtil.formatBalance(this.balance, this.balanceSymbol)}
             </wui-text>
-            ${this.explorerBtnTemplate()}
           </wui-flex>
         </wui-flex>
       </wui-flex>
