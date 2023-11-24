@@ -2,7 +2,6 @@ import {
   AccountController,
   ConnectionController,
   AssetController,
-  ConstantsUtil,
   CoreHelperUtil,
   EventsController,
   ModalController,
@@ -10,23 +9,14 @@ import {
   RouterController,
   SnackController
 } from '@web3modal/core'
-import type { CaipNetworkCoinbaseNetwork } from '@web3modal/core'
 import { UiHelperUtil, customElement } from '@web3modal/ui'
 import { LitElement, html } from 'lit'
 import { state } from 'lit/decorators.js'
 import { ifDefined } from 'lit/directives/if-defined.js'
 import styles from './styles.js'
 
-import { initOnRamp } from '@coinbase/cbpay-js'
-import type { CBPayInstanceType } from '@coinbase/cbpay-js'
-
-// -- Constants ----------------------------------------- //
-const coinbaseAppID = process.env['NEXT_PUBLIC_COINBASE_APP_ID']
-
-const tabs = [{ label: 'Tokens' }, { label: 'NFTs' }, { label: 'Activity' }]
-
-@customElement('w3m-account-view')
-export class W3mAccountView extends LitElement {
+@customElement('w3m-account-settings-view')
+export class W3mAccountSettingsView extends LitElement {
   public static override styles = styles
 
   // -- Members -------------------------------------------- //
@@ -46,8 +36,6 @@ export class W3mAccountView extends LitElement {
   @state() private balanceSymbol = AccountController.state.balanceSymbol
 
   @state() private network = NetworkController.state.caipNetwork
-
-  @state() private onrampInstance: CBPayInstanceType | null = null
 
   @state() private disconecting = false
 
@@ -70,7 +58,6 @@ export class W3mAccountView extends LitElement {
       NetworkController.subscribeKey('caipNetwork', val => {
         if (val?.id) {
           this.network = val
-          this.initializeOnRamp()
         }
       })
     )
@@ -78,17 +65,12 @@ export class W3mAccountView extends LitElement {
 
   public override disconnectedCallback() {
     this.usubscribe.forEach(unsubscribe => unsubscribe())
-    this.onrampInstance?.destroy()
-  }
-
-  public override firstUpdated() {
-    this.initializeOnRamp()
   }
 
   // -- Render -------------------------------------------- //
   public override render() {
     if (!this.address) {
-      throw new Error('w3m-account-view: No account provided')
+      throw new Error('w3m-account-settings-view: No account provided')
     }
 
     const networkImage = this.networkImages[this.network?.imageId ?? '']
@@ -139,80 +121,35 @@ export class W3mAccountView extends LitElement {
       </wui-flex>
 
       <wui-flex flexDirection="column" gap="m">
-        <wui-flex .padding=${['0', 'xl', '0', 'xl']} gap="1xs" class="account-links">
-          <wui-flex size="lg" @click=${this.handleClickPay.bind(this)}>
-            <wui-icon color="accent-100" name="wallet2"></wui-icon>
-          </wui-flex>
-          <wui-flex size="lg">
-            <wui-icon color="accent-100" name="recycleHorizontal"></wui-icon>
-          </wui-flex>
-          <wui-flex size="lg">
-            <wui-icon color="accent-100" name="arrowBottomCircle"></wui-icon>
-          </wui-flex>
-          <wui-flex size="lg">
-            <wui-icon color="accent-100" name="send"></wui-icon>
-          </wui-flex>
-        </wui-flex>
-
-        <wui-flex .padding=${['0', 'xl', '0', 'xl']}>
-          <wui-tabs .tabs=${tabs}></wui-tabs>
-        </wui-flex>
-
         <wui-flex flexDirection="column" gap="xs" .padding=${['0', 'xl', 'xl', 'xl'] as const}>
-          <w3m-transactions-view></w3m-transactions-view>
+          <wui-list-item
+            .variant=${networkImage ? 'image' : 'icon'}
+            iconVariant="overlay"
+            icon="networkPlaceholder"
+            imageSrc=${ifDefined(networkImage)}
+            ?chevron=${this.isAllowedNetworkSwitch()}
+            @click=${this.onNetworks.bind(this)}
+          >
+            <wui-text variant="paragraph-500" color="fg-100">
+              ${this.network?.name ?? 'Unknown'}
+            </wui-text>
+          </wui-list-item>
+          <wui-list-item
+            variant="icon"
+            iconVariant="overlay"
+            icon="disconnect"
+            ?chevron=${false}
+            .loading=${this.disconecting}
+            @click=${this.onDisconnect.bind(this)}
+          >
+            <wui-text variant="paragraph-500" color="fg-200">Disconnect</wui-text>
+          </wui-list-item>
         </wui-flex>
       </wui-flex>
     `
   }
 
   // -- Private ------------------------------------------- //
-  private handleClickPay() {
-    this.onrampInstance?.open()
-  }
-
-  private initializeOnRamp() {
-    const networkName = this.network?.name
-    const address = this.address
-
-    if (!coinbaseAppID) {
-      throw new Error('NEXT_PUBLIC_COINBASE_APP_ID is not set')
-    }
-
-    if (!networkName || !address) {
-      return
-    }
-
-    const coinbaseChainName =
-      ConstantsUtil.WC_COINBASE_PAY_SDK_CHAIN_NAME_MAP?.[networkName as CaipNetworkCoinbaseNetwork]
-
-    if (this.onrampInstance) {
-      this.onrampInstance.destroy()
-    }
-
-    initOnRamp(
-      {
-        appId: coinbaseAppID,
-        widgetParameters: {
-          destinationWallets: [
-            {
-              address,
-              blockchains: [coinbaseChainName],
-              assets: ['USDC']
-            }
-          ],
-          partnerUserId: address
-        },
-        experienceLoggedIn: 'popup',
-        experienceLoggedOut: 'popup',
-        closeOnExit: true,
-        closeOnSuccess: true
-      },
-      (_, instance) => {
-        this.onrampInstance = instance
-      }
-    )
-  }
-
   private explorerBtnTemplate() {
     const { addressExplorerUrl } = AccountController.state
 
@@ -254,11 +191,6 @@ export class W3mAccountView extends LitElement {
     }
   }
 
-  private onTransactions() {
-    EventsController.sendEvent({ type: 'track', event: 'CLICK_TRANSACTIONS' })
-    RouterController.push('Transactions')
-  }
-
   private async onDisconnect() {
     try {
       this.disconecting = true
@@ -283,6 +215,6 @@ export class W3mAccountView extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'w3m-account-view': W3mAccountView
+    'w3m-account-settings-view': W3mAccountSettingsView
   }
 }
